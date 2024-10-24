@@ -1,0 +1,88 @@
+---
+title: "Apartment Hunting Report"
+output: 
+  rmdformats::robobook:
+    lightbox: true
+params:
+  excel:
+    label: "Enter .xlsx file"
+    input: text
+    value: "example.xlsx"
+date: "`r Sys.Date()`"
+---
+
+```{css, echo=FALSE}
+body, h1, h2, h3, h4 {
+  font-family: arial !important;
+}
+.book .book-body .page-inner {
+  max-width: 90%;
+  margin: 0 auto;
+  padding: 10px 10px 10px 10px;
+}
+summary {
+  display: list-item;
+}
+```
+
+```{r echo=FALSE, setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+source("apthunting.R")
+```
+
+# Raw data
+<details>
+<summary>Show data</summary>
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::kable(df, format="markdown")
+```
+</details>
+
+# Bubble plot of amenity amount, commute time and rent price
+
+```{r, echo=FALSE, out.width="95%", out.height="95%", fig.width=20, fig.height=15}
+ggplotly(ggplot(df, aes(x=as.numeric(df[, "Commute time (minutes)"][[1]]), y=as.numeric(amenities_amts), size=as.numeric(df[, "Rent per month (total)"][[1]]), text=paste("Apartment name:", df[, "Name"][[1]], "\nCommute time (minutes):", df[, "Commute time (minutes)"][[1]], "\nAmount of amenities:", amenities_amts ,"\nTotal rent per month (USD):", df[, "Rent per month (total)"][[1]]), color=as.factor(df[, "Name"][[1]]))) +
+        geom_point(alpha=0.75) + 
+        scale_size(range = c(1, 10), name="Scale = rent per month in USD") + 
+        labs(color = "Color = apartment name") + theme(legend.position="none") + theme_light() + labs(x="Commute time (minutes)", y="Amount of amenities") + scale_color_nord("lumina") + xlim(5,21) + ylim(0, 10) + guides(colour = guide_legend(override.aes = list(size=10))), tooltip="text")
+
+```
+
+
+# Bar plot of scores
+<details>
+<summary>The following is the formula for getting apartment scores:</summary>
+((1500 - rent) * 0.45) + (bedrooms * 100) + (bathrooms * 100) + (kitchens * 50) + (offices * 100)
++ ((30 - commute_time) * 10) + (pet_friendly * 100) + (furnished * 100) + (count_of_other_amenities * 50)
+</details>
+```{r, echo=FALSE, fig.width=17, fig.height=8, warning=FALSE}
+long_df <- data.frame(Name = character(), Variable = character(), Score = numeric(), stringsAsFactors = FALSE)
+
+# Manually reshape the data from wide to long format
+for (i in seq_along(scores)) {
+  complex_data <- scores[[i]]
+  for (variable in names(complex_data)) {
+    long_df <- rbind(long_df, data.frame(Name = df[i, "Name"][[1]], Variable = variable, Score = complex_data[[variable]]))
+  }
+}
+
+ggplot(long_df, aes(x = reorder(Name, +Score), y = Score, fill = Variable)) + 
+  geom_bar(stat = "identity", position = "stack")  + geom_text(aes(label = Score), size = 4, hjust = 0.5, vjust = 1.25, position = "stack", color="white") +
+  labs(x = "Apartment Complex", y = "Score", fill = "Attributes") +
+  theme_minimal() + scale_fill_nord("lumina") + scale_x_discrete(labels = label_wrap(12))
+```
+
+# Fun but useless analysis for my enjoyment
+<details>
+<summary>Pie chart showing frequency of amenities</summary>
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+temp = data.frame(freq=frequencies, names=u_amenities)
+ggplot(temp, aes(x="", y=as.numeric(frequencies), fill=u_amenities)) +
+  geom_bar(stat="identity") + coord_polar("y", start=0) + 
+  theme_void() + scale_fill_nord("lumina") + labs(y="# of apartments with this amenity", fill="Amenities")
+```
+</details>
