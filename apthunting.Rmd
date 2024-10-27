@@ -66,12 +66,15 @@ long_df <- data.frame(Name = character(), Variable = character(), Score = numeri
 for (i in seq_along(scores)) {
   complex_data <- scores[[i]]
   for (variable in names(complex_data)) {
+    
     long_df <- rbind(long_df, data.frame(Name = df[i, "Name"][[1]], Variable = variable, Score = complex_data[[variable]]))
   }
 }
 
+
 ggplot(long_df, aes(x = reorder(Name, +Score), y = Score, fill = Variable)) + 
-  geom_bar(stat = "identity", position = "stack")  + geom_text(aes(label = Score), size = 4, hjust = 0.5, vjust = 1.25, position = "stack", color="white") +
+  geom_bar(stat = "identity", position = "stack")  + 
+  #geom_text(aes(label = Score), size = 4, na.rm=TRUE, hjust = 0.5, vjust = 1.25, position = "stack", color="white") +
   labs(x = "Apartment Complex", y = "Score", fill = "Attributes") +
   theme_minimal() + scale_fill_nord("lumina") + scale_x_discrete(labels = label_wrap(12))
 ```

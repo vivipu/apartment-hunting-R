@@ -9,6 +9,7 @@ library(scales)
 library(plotly)
 library(tidyr)
 library(plyr)
+library(dplyr)
 
 xl = gsub('"', '', params$excel)
 xl = gsub("\\\\", "/", xl)
